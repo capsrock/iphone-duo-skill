@@ -4,6 +4,7 @@ Three things are easy to confuse. **Displacement** is a design pattern — movin
 
 ## Contents
 
+- [Availability](#availability)
 - [Poses](#poses)
 - [Reserved regions](#reserved-regions)
 - [Reading regions in SwiftUI](#reading-regions-in-swiftui)
@@ -12,6 +13,21 @@ Three things are easy to confuse. **Displacement** is a design pattern — movin
 - [Arrangement views](#arrangement-views)
 - [Hinge state and camera](#hinge-state-and-camera)
 
+## Availability
+
+Everything in this file is iOS 27.1. The fold arrived with the device, and the APIs that describe it did too. Read from the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1 beta, 27A9269, on 2026-09-19):
+
+| API | Availability |
+|---|---|
+| `ReservedRegion`, `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)` | iOS 27.1 |
+| `UIView.ReservedRegion`, `UIView.reservedRegions(kind:options:)` | iOS 27.1 |
+| `ArrangementView`, `arrangementViewStyle(_:)`, `overlayArrangementZIndex` | iOS 27.1 |
+| `DeviceHinge`, `DeviceHingeContext`, `onHingeChange(isEnabled:_:)` | iOS 27.1 |
+| `CameraCaptureAccessory` | iOS 27.1 |
+| `sceneAccessory(content:)` | iOS 27.0 |
+
+The SDK spells it `@available(anyAppleOS 27.1, *)`. Below that deployment target, gate with `if #available(iOS 27.1, *)` and lose nothing: on an older system there is no fold to avoid and no hinge to read.
+
 ## Poses
 
 People hold the device closed, fully open, partly folded like a book, standing on its edges, or laid down like a laptop. Poses are a continuum, not a set of modes.
@@ -19,6 +35,8 @@ People hold the device closed, fully open, partly folded like a book, standing o
 Apple's guidance is unambiguous: **do not design a layout per pose.** Use size classes so the layout adapts naturally as the window changes size and shape. A hands-free variant for a laid-down device is acceptable only if it keeps the same controls and the same hierarchy — anything more and people have to relearn the app as they move it.
 
 Avoid dramatic rearrangement as the device folds. Move only what must move to stay visible and tappable. Controls that vanish or jump are hard to track.
+
+A practical test Apple's own app teams used: **can you animate the transition between the two states smoothly?** If a change is so large that no animation makes sense, it is too large. Teams that applied this test converged on the right patterns without having to reason about poses individually. The TV app is the worked example — partly folding during playback slides the video and the controls apart, which is what an arrangement view gives you.
 
 Guidance for moving elements:
 
@@ -177,7 +195,7 @@ The closure receives the previous and current context; `hinge.angle` is an `Angl
 
 For camera apps: the display an app occupies and the direction a camera faces can change as the device opens, closes and rotates. Apple's guidance lives in *Choosing a camera by the direction it faces*. While the device is open and capturing with the rear camera, an app can show supplementary content on the outer display (subject preview, teleprompter) through a scene accessory — `CameraCaptureAccessory` in SwiftUI (iOS 27.1). Apps without a camera session can ignore all of this.
 
-Note the conditions Apple states for that accessory: the app must be full screen on the inner display and have an active camera session. It is not a general "put something on the other display" capability.
+Worth knowing even if you never ship a camera app: **using both displays at once is restricted to camera apps**, gated by a system entitlement, and only while a camera session is running. Holding the entitlement alone is not enough. There is no general "put something on the other display" capability.
 
 The more broadly useful piece is `sceneAccessory(content:)` (iOS 27.0), which is not Duo-specific — it also drives an external display while the phone acts as a controller, for example. Availability is managed by the system and changes at runtime, so observe it (`onAvailabilityChange`) and disable the corresponding control rather than assuming it stays available.
 

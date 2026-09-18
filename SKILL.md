@@ -22,7 +22,15 @@ The single most useful thing to understand: **this is not a new platform.** It i
 
 **Build with Xcode 27.1 or later.** Apple is explicit: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen. This applies to CI too — an Xcode Cloud workflow pinned to an older Xcode produces a non-Duo-capable binary.
 
-**The Duo simulator needs Xcode 27.1.** Device Hub's iPhone Duo requires it. Verified behavior on older toolchains: the `iPhone Duo` device type (`iPhone19,4`) declares `minRuntimeVersion = 27.1`, and the iOS 27.2 beta runtime lists `iPhone19,4` in `unsupportedDeviceTypes`, so `simctl create` fails with `Incompatible device` (403). Check before assuming a simulator is available:
+**As of 2026-09-19, Xcode 27.1 exists only as a beta** — 27A9269, released 2026-09-18. No release build has followed it, and Apple's own page still carries the note that the Duo simulator requires "Xcode 27.1, coming later this month." Check Apple's releases feed rather than assuming that has changed:
+
+```bash
+curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "<title>[^<]*Xcode[^<]*</title>"
+```
+
+What follows from that: **the beta verifies, it does not ship.** Everything Duo-specific behaves correctly on it — the simulator, vertical bars, asymmetric safe areas, the fold — so the adaptation work can be done and checked today. A submission cannot come from it: App Store Connect rejects binaries built with a beta toolchain, and an Xcode Cloud workflow set to "Latest Release" never resolves to a beta. Do the work now against the beta; plan the distribution build for the release.
+
+**The Duo simulator arrives with 27.1.** Verified on 2026-09-19 with Xcode 27.1 beta: the `iPhone Duo` device type (`iPhone19,4`) runs on the iOS 27.1 runtime (24A94401), and that is the only runtime that supports it — the iOS 27.2 beta runtime (24B5084k) still lists `iPhone19,4` under `unsupportedDeviceTypes`, so a newer runtime is not a substitute. Check what a given machine actually has before planning fold work:
 
 ```bash
 xcrun simctl list runtimes -j | python3 -c "
@@ -33,9 +41,9 @@ for r in json.load(sys.stdin)['runtimes']:
 "
 ```
 
-If no runtime supports Duo, the fold-specific work (`ReservedRegion`, pose testing) cannot be verified yet. Do the resizing work first — it is verifiable on any simulator — and stage the fold work behind that.
+If no runtime supports Duo, the fold-specific work (`ReservedRegion`, pose testing) cannot be verified there. Do the resizing work first — it is verifiable on any simulator — and stage the fold work behind that.
 
-**Before Xcode 27.1 exists, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
+**On a machine without Xcode 27.1, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
 
 See `references/environment.md` for release timing, Xcode Cloud, and featuring nomination deadlines.
 
@@ -159,13 +167,15 @@ GeometryReader { proxy in
 }
 ```
 
+All of it is iOS 27.1 — `ReservedRegion`, `ArrangementView`, and the hinge types alike, verified in the iOS 27.1 SDK. Below that deployment target, gate with `if #available(iOS 27.1, *)`; there is no fold on an older system to handle.
+
 Read `references/reserved-regions.md` for the `ReservedRegion` API, `ArrangementView`, and the pose guidance.
 
 ## Adaptation Checklist
 
 Work down this list; it is roughly ordered by how much breakage each item causes.
 
-1. Build with Xcode 27.1+, including CI.
+1. Build with Xcode 27.1+, including CI — and remember the distribution build needs the release toolchain, not the beta.
 2. Remove screen-based layout math (`UIScreen.main`, hardcoded iPhone dimensions).
 3. Make every screen survive a width change — check compact and regular width.
 4. Give toolbar items both a title and a symbol; make sure bars come from navigation containers.
@@ -182,7 +192,9 @@ Work down this list; it is roughly ordered by how much breakage each item causes
 
 **Expecting orientation lock to protect you.** It does not. The inner display honors the declared orientations by not rotating, and then scales the app — while still reporting regular/regular size classes. Staying portrait-only buys you a worse-looking result, not an exemption. Width adaptation is the real work.
 
-**Designing for every pose.** Apple's instruction is to target two size classes instead — compact width outside, regular width inside — and to design the app to be freely resizable. The one optional exception they name is a seated, hands-free layout with media at the top and tappable controls on the stable base at the bottom, and even then it has to carry the same controls and general hierarchy as every other pose. Functionality must never be tied to a pose.
+**Designing for every pose.** When Apple was asked what design mistake they expect to see on Duo, this was the answer. Their own design team started by enumerating poses and building an experience for each, then found that getting the fundamentals right covered all of them. Go deeper on a specific pose only where it genuinely serves the app — a media player moving controls to the lower half when the device is laid down — and keep the same controls and hierarchy when you do.
+
+**Assuming one way of holding it.** People stand the device up with the camera side down, or with the outer display down. Both should work the same way.
 
 **Putting an `ArrangementView` inside a navigation container, list, or scroll view.** It lays out content and does not handle navigation; nesting it this way can make part of your view unreachable. Navigation goes outside.
 
@@ -214,3 +226,4 @@ curl -sL "https://developer.apple.com/videos/play/tech-talks/111461/" | \
 
 Apple Design Resources ships the iOS/iPadOS 27 UI Kit and iPhone Duo bezels.
 
+A few points here come from the iPhone Duo Group Lab (Meet with Apple, 2026-09-16), which has no public transcript, by way of d_date's write-up: https://zenn.dev/d_date/articles/d874e248ac7851 — the camera entitlement, the "can you animate the transition?" heuristic, and the note that Apple's own design team began by enumerating poses before concluding the fundamentals covered them.

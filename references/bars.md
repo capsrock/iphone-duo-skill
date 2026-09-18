@@ -174,11 +174,11 @@ SwiftUI, with availability:
 | `ToolbarContent.visibilityPriority(_:)` | iOS 27.0 | Apply the priority |
 | `ToolbarItemPlacement.topBarPinnedTrailing` | iOS 27.0 | Pin a prominent action |
 | `ToolbarOverflowMenu` | iOS 27.0 | Always-overflow actions |
-| `ToolbarItemAxisBehavior` (`.automatic` / `.horizontalOnly` / `.verticalPreferred`) | iOS 27.x | Restrict an item's axis |
+| `ToolbarItemAxisBehavior` (`.automatic` / `.horizontalOnly` / `.verticalPreferred`) | iOS 27.1 | Restrict an item's axis |
 | `ToolbarVerticalCompressionBehavior` (`.automatic` / `.prefersTabBar` / `.prefersToolbarItems`) | iOS 27.1 | Toolbar vs tab bar |
 | `View.toolbarVerticalBehavior(_:)` with `ToolbarVerticalBehavior.disabled` | iOS 27.1 | Opt out |
-| `EnvironmentValues.toolbarVerticalEdge` | iOS 27.x | Which edge the bar uses |
-| `View.presentationPlacement(_:)`, `PresentationPlacement` (`.automatic` / `.center` / `.leading` / `.trailing`) | iOS 27.x | Sheet placement; sheets only |
+| `EnvironmentValues.toolbarVerticalEdge` | iOS 27.1 | Which edge the bar uses |
+| `View.presentationPlacement(_:)`, `PresentationPlacement` (`.automatic` / `.center` / `.leading` / `.trailing`) | iOS 27.0 | Sheet placement; sheets only |
 | `View.backgroundExtensionEffect()` | iOS 26 | Extend a background under the bar |
 | `View.defaultTabBarPlacement(_:)` with `.sidebar` / `.tabBar` | iOS 27.0 | Sidebar vs tab bar where the bar cannot morph; pairs with `.tabViewStyle(.sidebarAdaptable)` |
 
@@ -186,7 +186,11 @@ SwiftUI also offers `toolbarOverflowMenu(content:)` as a modifier alongside the 
 
 UIKit equivalents: `UIBarButtonItemVisibilityPriority` (default `.standard`), `UIBarButtonItem.axisBehavior`, `UIBarButtonItem.badge`, `UINavigationItem.pinnedTrailingGroup`, `UINavigationItem.leadingItemGroups`, `UINavigationItem.leftItemsSupplementBackButton`, `UINavigationItem.additionalOverflowItems`, `UINavigationItem.verticalBarCompressionBehavior` (`.prefersBarItems`), `UIViewController.preferredVerticalBarBehavior`, `UISheetPresentationController.preferredPlacement`, `UITraitCollection.verticalBarEdge`, `UIBackgroundExtensionView`.
 
-Verify availability against the installed SDK before relying on any of these; the exact minor version matters and several of these symbols appeared in official session samples before landing in the public documentation or a shipped SDK.
+These versions were read out of the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1 beta, 27A9269, on 2026-09-19), not out of the documentation, which lags. The SDK spells Duo-era availability `@available(anyAppleOS 27.1, *)`.
+
+The split is worth holding onto when you pick a deployment target. **Organizing a toolbar is 27.0; inspecting or steering the vertical bar is 27.1.** `visibilityPriority`, `topBarPinnedTrailing`, `ToolbarOverflowMenu` and `defaultTabBarPlacement` are 27.0, while `toolbarVerticalEdge`, `axisBehavior`, `ToolbarVerticalCompressionBehavior` and `toolbarVerticalBehavior` are 27.1. The vertical bar itself is not an API you adopt — the system does it, given a binary built with the 27.1 SDK — so an app with a lower deployment target still gets the behavior and simply gates the tuning APIs behind `if #available(iOS 27.1, *)`.
+
+UIKit's Objective-C surface was not swept the same way; check the headers before relying on a UIKit spelling.
 
 ## Spacing and backgrounds
 
