@@ -1,5 +1,70 @@
 # iphone-duo-development
 
+**English** | [日本語](#日本語)
+
+A Claude skill for adapting iOS apps to **iPhone Duo** — Apple's foldable iPhone, announced 2026-09-09 and shipping 2026-10-23 with iOS 27.1.
+
+The premise of this skill is that iPhone Duo is not a new platform. It is an iPhone whose window size changes a great deal. Most of the work is making layouts resizable, which is the same work as supporting iPad. The Duo-specific parts — the fold, vertical bars, asymmetric safe areas — sit on top of that.
+
+## What it covers
+
+- **Resizable layouts** — size classes per display and orientation, sizing against the container, and what to remove (`UIScreen.main`, idiom checks, orientation checks, fixed widths)
+- **Asymmetric safe areas** — a failure mode that resizing the window does not surface, and the one portrait-locked apps are most exposed to
+- **Vertical bars** — when toolbars and tab bars move to the side, why title-only items do not appear there, ordering, overflow priority, and the exceptions for sheets, split views and inspectors
+- **The fold** — reserved regions (`division` and `occlusion`), arrangement views, and the principle that matters most: keep interactive elements off the fold
+- **Build and verification environment** — the Xcode 27.1 requirement, why older toolchains refuse to create a Duo simulator, and how to verify before 27.1 ships
+- **Release timing** — the review sequence, and the App Store featuring nomination deadline counted back from the ship date
+
+## Layout
+
+```
+SKILL.md                          Core guidance, adoption checklist, common failures
+references/bars.md                Vertical bars and toolbar APIs in detail
+references/reserved-regions.md    The fold, reserved regions, arrangement views, multiple windows
+references/environment.md         Toolchain, simulators, CI, release timing
+```
+
+For ordinary use `SKILL.md` alone is enough. The reference files are loaded when the work moves into their area.
+
+## Installation
+
+Copy it into Claude's skills directory.
+
+```bash
+cp -R iphone-duo-skill ~/.claude/skills/iphone-duo-development
+```
+
+To use it in a single project:
+
+```bash
+cp -R iphone-duo-skill <project>/.claude/skills/iphone-duo-development
+```
+
+It triggers on mentions of iPhone Duo, foldable devices, the inner or outer display, the fold, the hinge, `ArrangementView`, `ReservedRegion`, and vertical bars. It also triggers on work like making an existing iPhone app resizable or adopting size classes, even when Duo is not named.
+
+## Sources
+
+Built from Apple's primary material.
+
+- Tech Talks 111461–111466 (cited with timecodes). Each session page has its transcript and official code samples embedded in the HTML; the commands for extracting them are in `references/environment.md`
+- Human Interface Guidelines — *Designing for iPhone Duo*
+- *Preparing your app for iPhone Duo* (Technology Overviews)
+- SwiftUI / UIKit reference for the relevant iOS 27 APIs
+
+The environment behavior written up in `references/environment.md` — the simulator's `Incompatible device` error, the device type and runtime profiles behind it, and how to tell which runtimes are available — was verified against an actually installed toolchain rather than copied out of documentation.
+
+Transcript text is Apple's copyrighted work and is not included in this repository.
+
+## License
+
+MIT
+
+---
+
+# 日本語
+
+[English](#iphone-duo-development) | **日本語**
+
 iOS アプリを **iPhone Duo**（Apple の折りたたみ iPhone。2026-09-09 発表、2026-10-23 に iOS 27.1 とともに発売）へ対応させるための Claude スキルです。
 
 このスキルの前提は、iPhone Duo は新しいプラットフォームではない、という点にあります。ウインドウのサイズが大きく変わる iPhone です。作業のほとんどはレイアウトをリサイズ可能にすることで、これは iPad 対応と同じ内容です。折り目・垂直バー・非対称なセーフエリアといった Duo 固有の部分は、その上に乗ります。
