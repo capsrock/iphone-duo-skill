@@ -186,7 +186,7 @@ Work down this list; it is roughly ordered by how much breakage each item causes
 9. Verify state and playback survive folding, unfolding, and rotation mid-task.
 10. Check large Dynamic Type on the inner display — the extra room makes big text sizes far more usable, so people who need them will be there.
 11. Turn on Reduce Transparency and re-check: the vertical bar draws an opaque background in that mode.
-12. Walk every screen in Device Hub across poses and both displays.
+12. Walk every screen across poses and both displays. On the simulator, [`duoctl`](https://github.com/skarol/duoctl) drives the poses and captures each one (`open` / `close` / `half` / `rotate`, then `screenshot`); open Device Hub only for what duoctl cannot do.
 
 ## Common Mistakes
 
