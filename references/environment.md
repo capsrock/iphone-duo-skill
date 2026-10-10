@@ -27,7 +27,7 @@ Split View puts two apps side by side on iPhone for the first time, and two wind
 
 **Build with Xcode 27.1 or later.** From Apple's own guidance: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen on iPhone Duo. This is a build-time property of the binary — no runtime flag recovers it.
 
-**Release status, 2026-09-19.** Xcode 27.1 beta (27A9269) shipped 2026-09-18. There is no release build yet, and Apple's Duo page still says the simulator needs "Xcode 27.1, coming later this month." Apple's releases feed is the authority, and it is one command:
+**Release status** changes; do not assume it. Apple's releases feed is the authority, and it is one command:
 
 ```bash
 curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "<title>[^<]*Xcode[^<]*</title>"
@@ -35,7 +35,7 @@ curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "
 
 The beta carries Swift 6.4 and the iOS 27.1 SDK, and needs macOS Tahoe 26.6 or later. Its [release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) are the only ones for this SDK — there is no iOS 27.1 release-notes page at all, the iOS index lists 27 and 27.2 beta only.
 
-The beta covers every kind of verification and none of the distribution — App Store Connect rejects binaries built with a beta toolchain. Duo work therefore splits along a clean line: adapt and verify now on the beta, build and submit when the release lands. Nothing in the adaptation work has to wait.
+A beta covers every kind of verification and none of the distribution — App Store Connect rejects binaries built with a beta toolchain. Adapt and verify on whatever 27.1 build is installed; build and submit with a toolchain App Store Connect accepts.
 
 There are three steps, described in *Prepare your app for iPhone Duo* at 00:30–01:11:
 
@@ -55,7 +55,7 @@ Check what a given Xcode is:
 
 ```bash
 xcodebuild -version
-DEVELOPER_DIR=/Applications/Xcode-27.1.0.app/Contents/Developer xcodebuild -version
+DEVELOPER_DIR=/Applications/<Xcode-27.1 app>.app/Contents/Developer xcodebuild -version
 ```
 
 Prefer `DEVELOPER_DIR` on individual commands over changing `xcode-select` globally, so other projects keep building with the toolchain they expect.
@@ -130,7 +130,7 @@ for r in json.load(sys.stdin)['runtimes']:
 Downloading a runtime (roughly 8 GB, and it takes a while):
 
 ```bash
-DEVELOPER_DIR=/Applications/Xcode-27.1.0-beta.app/Contents/Developer xcodebuild -downloadPlatform iOS
+DEVELOPER_DIR=/Applications/<Xcode-27.1 app>.app/Contents/Developer xcodebuild -downloadPlatform iOS
 # specific version, if the asset exists for that Xcode:
 xcodebuild -downloadPlatform iOS -buildVersion 27.1
 ```
@@ -155,7 +155,7 @@ Portrait-locked apps carry the most risk in the second column: they have never e
 
 A workflow pinned to an older Xcode silently produces a non-Duo-capable binary — it builds and passes, it just cannot use the full screen. Update the workflow's Xcode version as part of Duo work, not as an afterthought at submission time, and confirm the resulting build came from the intended toolchain.
 
-**While 27.1 is beta-only, no Xcode Cloud workflow can produce a shippable Duo build.** "Latest Release" resolves to the newest *released* Xcode, which is 27 until 27.1 ships, and a build made from a beta toolchain is not acceptable to App Store Connect anyway. The practical sequence: verify locally against the 27.1 beta now, then on the day the release lands, point the workflow at it and rebuild. A binary produced before that day is not Duo-capable no matter when it is submitted.
+**"Latest Release" resolves only to a released Xcode**, and a beta-built binary is not acceptable to App Store Connect. Before the distribution build, confirm the workflow's Xcode is 27.1 or later and accepted for submission; a binary built with 27.0 is not Duo-capable no matter when it is submitted.
 
 ## App Store timing and featuring nominations
 
@@ -171,7 +171,7 @@ Nominations are filed before release and describe a planned update, so it is nor
 
 Editors weigh user experience, UI design, innovation, uniqueness, accessibility, localization, and the product page itself. There is no checklist that guarantees selection.
 
-Sequence the release realistically: the Duo-optimized binary needs a released Xcode 27.1, then App Review, then release — all before the nominated publish date. As of 2026-09-19 that toolchain has not shipped, so the schedule depends on something outside your control. Nominate on the assumption it lands in late September, and move the publish date rather than nominating against a release that cannot ship.
+Sequence the release realistically: the Duo-optimized binary needs an App Store-accepted Xcode 27.1, then App Review, then release — all before the nominated publish date. Move the publish date rather than nominating against a build that cannot ship.
 
 ## Reading the primary sources
 

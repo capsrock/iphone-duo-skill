@@ -22,13 +22,13 @@ The single most useful thing to understand: **this is not a new platform.** It i
 
 **Build with Xcode 27.1 or later.** Apple is explicit: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen. This applies to CI too — an Xcode Cloud workflow pinned to an older Xcode produces a non-Duo-capable binary.
 
-**As of 2026-09-19, Xcode 27.1 exists only as a beta** — 27A9269, released 2026-09-18. No release build has followed it, and Apple's own page still carries the note that the Duo simulator requires "Xcode 27.1, coming later this month." Check Apple's releases feed rather than assuming that has changed:
+**Check whether the installed Xcode 27.1 is a beta, RC, or release before planning distribution** (`xcodebuild -version`). Apple's releases feed is the authority:
 
 ```bash
 curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "<title>[^<]*Xcode[^<]*</title>"
 ```
 
-What follows from that: **the beta verifies, it does not ship.** Everything Duo-specific behaves correctly on it — the simulator, vertical bars, asymmetric safe areas, the fold — so the adaptation work can be done and checked today. A submission cannot come from it: App Store Connect rejects binaries built with a beta toolchain, and an Xcode Cloud workflow set to "Latest Release" never resolves to a beta. Do the work now against the beta; plan the distribution build for the release.
+**A beta toolchain verifies, it does not ship.** All Duo-specific behavior (the simulator, vertical bars, asymmetric safe areas, the fold) can be checked on any 27.1 build. App Store Connect rejects binaries built with a beta toolchain, and an Xcode Cloud workflow set to "Latest Release" never resolves to a beta, so confirm the workflow's Xcode is one App Store Connect accepts before the distribution build.
 
 **The Duo simulator arrives with 27.1.** Verified on 2026-09-19 with Xcode 27.1 beta: the `iPhone Duo` device type (`iPhone19,4`) runs on the iOS 27.1 runtime (24A94401), and that is the only runtime that supports it — the iOS 27.2 beta runtime (24B5084k) still lists `iPhone19,4` under `unsupportedDeviceTypes`, so a newer runtime is not a substitute. Check what a given machine actually has before planning fold work:
 
