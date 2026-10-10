@@ -45,7 +45,7 @@ If no runtime supports Duo, the fold-specific work (`ReservedRegion`, pose testi
 
 **On a machine without Xcode 27.1, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
 
-See `references/environment.md` for release timing, Xcode Cloud, and featuring nomination deadlines.
+See `references/environment.md` for release timing, Xcode Cloud, and featuring nominations.
 
 ## What Your Build Actually Gets
 

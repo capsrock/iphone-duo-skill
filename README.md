@@ -13,7 +13,7 @@ The premise of this skill is that iPhone Duo is not a new platform. It is an iPh
 - **Vertical bars** — when toolbars and tab bars move to the side, why title-only items do not appear there, ordering, overflow priority, and the exceptions for sheets, split views and inspectors
 - **The fold** — reserved regions (`division` and `occlusion`), arrangement views, and the principle that matters most: keep interactive elements off the fold
 - **Build and verification environment** — the Xcode 27.1 requirement, why older toolchains refuse to create a Duo simulator, and how to verify before 27.1 ships
-- **Release timing** — the review sequence, and the App Store featuring nomination deadline counted back from the ship date
+- **Release timing** — the review sequence and App Store featuring nominations
 
 ## Layout
 

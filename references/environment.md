@@ -165,8 +165,6 @@ From Apple's Getting Featured page:
 
 > For wider featuring consideration, we recommend submitting a nomination up to three months in advance.
 
-So for a launch-timed feature: **two weeks is the floor, not the target.** Counting back from 2026-10-23 availability, the hard deadline is 2026-10-09; earlier is materially better since editors plan ahead.
-
 Nominations are filed before release and describe a planned update, so it is normal to submit while the work is still in progress. Fields include the nomination type (App Launch / App Enhancements / New Content — a Duo update to an existing app is App Enhancements), a publish date or range, a detailed description of what and why, platforms, countries, and up to five supplemental URLs. A public TestFlight link is a strong supplement because editors can see the thing working.
 
 Editors weigh user experience, UI design, innovation, uniqueness, accessibility, localization, and the product page itself. There is no checklist that guarantees selection.
