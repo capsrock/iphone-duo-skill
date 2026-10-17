@@ -1,5 +1,7 @@
 # iphone-duo-development
 
+![iphone-duo-development — Adapt iOS apps to iPhone Duo](assets/social-card.png)
+
 **English** | [日本語](#日本語)
 
 A Claude skill for adapting iOS apps to **iPhone Duo** — Apple's foldable iPhone, announced 2026-09-09 and shipping 2026-10-23 with iOS 27.1.
