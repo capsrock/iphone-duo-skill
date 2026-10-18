@@ -15,7 +15,7 @@ Three things are easy to confuse. **Displacement** is a design pattern — movin
 
 ## Availability
 
-Everything in this file is iOS 27.1. The fold arrived with the device, and the APIs that describe it did too. Read from the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1 beta, 27A9269, on 2026-09-19):
+Everything in this file is iOS 27.1. The fold arrived with the device, and the APIs that describe it did too. Read from the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1, 27A9275; re-checked against the released SDK on 2026-10-19, where every row below still reads `@available(anyAppleOS 27.1, *)`):
 
 | API | Availability |
 |---|---|

@@ -27,15 +27,13 @@ Split View puts two apps side by side on iPhone for the first time, and two wind
 
 **Build with Xcode 27.1 or later.** From Apple's own guidance: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen on iPhone Duo. This is a build-time property of the binary — no runtime flag recovers it.
 
-**Release status** changes; do not assume it. Apple's releases feed is the authority, and it is one command:
+**Xcode 27.1 shipped on 2026-10-15 as 27A9275.** It carries Swift 6.4 and the iOS 27.1 SDK, and needs macOS Tahoe 26.6 or later. One toolchain therefore covers both verification and distribution; there is no beta-only window left to plan around. Its [release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) are the only ones for this SDK — there is no iOS 27.1 release-notes page at all (checked 2026-10-19: that URL returns 404, and the iOS index lists 27 and 27.2 beta only).
+
+Apple's releases feed stays the authority for anything newer, and it is one command:
 
 ```bash
 curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "<title>[^<]*Xcode[^<]*</title>"
 ```
-
-The beta carries Swift 6.4 and the iOS 27.1 SDK, and needs macOS Tahoe 26.6 or later. Its [release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) are the only ones for this SDK — there is no iOS 27.1 release-notes page at all, the iOS index lists 27 and 27.2 beta only.
-
-A beta covers every kind of verification and none of the distribution — App Store Connect rejects binaries built with a beta toolchain. Adapt and verify on whatever 27.1 build is installed; build and submit with a toolchain App Store Connect accepts.
 
 There are three steps, described in *Prepare your app for iPhone Duo* at 00:30–01:11:
 
@@ -49,7 +47,13 @@ You do not need every pose handled on day one — get resizing right first.
 
 `UIRequiresFullScreen` continues to be honored, but the app still resizes as the device opens and closes, so it is not an escape hatch. It is also deprecated in Apple's documentation; treat "honored" as a transitional courtesy rather than a supported strategy.
 
-Xcode 27.1 also renames the **app modernization skill** — a coding-assistant skill introduced in *Modernize Your UIKit App* (WWDC26) — to **App Resizability**, and extends it to SwiftUI and iPhone Duo (*Prepare your app for iPhone Duo*, closing recap). It is a skill inside the assistant, not a menu command, and nothing by that name appears anywhere in the 27A9269 bundle, so expect it to be delivered through the assistant rather than shipped in the app.
+Xcode 27.1 also renames the **app modernization skill** — a coding-assistant skill introduced in *Modernize Your UIKit App* (WWDC26) — to **App Resizability**, and extends it to SwiftUI and iPhone Duo (*Prepare your app for iPhone Duo*, closing recap). It is a skill inside the assistant, not a menu command, and in the released 27A9275 it ships as a prompt template you can read:
+
+```bash
+cat "/Applications/<Xcode-27.1 app>.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/app-resizability.idechatprompttemplate"
+```
+
+Worth reading once: it is Apple's own instructions for this exact task, and it covers the same ground as this skill — resizable layouts plus replacing `mainScreen`, `interfaceOrientation`, `userInterfaceIdiom`, lifecycle and safe-area assumptions. `swiftui-whats-new-27` sits beside it in the same directory.
 
 Check what a given Xcode is:
 
@@ -62,17 +66,17 @@ Prefer `DEVELOPER_DIR` on individual commands over changing `xcode-select` globa
 
 ## Simulator availability
 
-The iPhone Duo simulator in Device Hub requires Xcode 27.1, and the beta is enough. Verified on 2026-09-19 with Xcode 27.1 beta (27A9269):
+The iPhone Duo simulator in Device Hub requires Xcode 27.1. Verified on 2026-10-19 with Xcode 27.1 (27A9275):
 
 ```
 $ xcrun simctl list devicetypes | grep -i duo
 iPhone Duo (com.apple.CoreSimulator.SimDeviceType.iPhone-Duo)
 
 $ xcrun simctl list runtimes
-iOS 27.1 (27.1 - 24A94401) - com.apple.CoreSimulator.SimRuntime.iOS-27-1
+iOS 27.1 (27.1 - 24A94425) - com.apple.CoreSimulator.SimRuntime.iOS-27-1
 ```
 
-iOS 27.1 (24A94401) is the only runtime that supports the device, and this is not a case where a newer runtime is safer: the iOS 27.2 beta runtime (24B5084k) still lists `iPhone19,4` under `unsupportedDeviceTypes`.
+The iOS 27.1 runtime is the only one that supports the device, and this is not a case where a newer runtime is safer: iOS 27.0 (24A434) does not support it, and the iOS 27.2 beta runtime (24B5084k) still lists `iPhone19,4` under `unsupportedDeviceTypes`. Match on the runtime *version*, not its build — a machine upgraded through the beta keeps both 27.1 builds installed (24A94401 from the beta, 24A94425 from the release), and both support Duo.
 
 ### Two displays in one simulator
 
@@ -88,7 +92,7 @@ The GUI is Device Hub: `Simulator.app` no longer exists in Xcode 27, and its rep
 
 ### What the Duo runtime cannot do
 
-Three limits from the Xcode 27.1 beta release notes, worth knowing before planning verification around the simulator:
+Three limits from the Xcode 27.1 release notes, still listed in the released build, worth knowing before planning verification around the simulator:
 
 - **Most app extensions cannot be run or debugged on the Duo runtime** (187708767). A widget, a share extension, an App Intents extension — none of it launches there. Verify extensions on an ordinary iPhone simulator and the containing app on Duo.
 - **StandBy is unavailable** on the Duo runtime (187708663).
@@ -139,11 +143,11 @@ If the asset is absent the command says so quickly (`iOS 27.1 is not available f
 
 **Practical consequence:** when no Duo-capable runtime is installed, sequence the work so resizing comes first. Width and size-class adaptation is verifiable on any simulator and is most of the effort. Fold handling, pose testing, and anything gated on iOS 27.1 APIs waits for the toolchain.
 
-### Testing on a machine without Xcode 27.1
+### Testing before the toolchain is updated
 
 Use **iPhone Mirroring on a Mac** and resize the mirrored window. Apple draws the equivalence itself: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may react to different size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28).
 
-The split is worth internalizing, because it tells you what you can and cannot sign off on before the simulator arrives:
+The split is worth internalizing, because it tells you what you can and cannot sign off on without the Duo simulator:
 
 | Found by resizing | Found only on the Duo simulator |
 |---|---|
@@ -155,7 +159,7 @@ Portrait-locked apps carry the most risk in the second column: they have never e
 
 A workflow pinned to an older Xcode silently produces a non-Duo-capable binary — it builds and passes, it just cannot use the full screen. Update the workflow's Xcode version as part of Duo work, not as an afterthought at submission time, and confirm the resulting build came from the intended toolchain.
 
-**"Latest Release" resolves only to a released Xcode**, and a beta-built binary is not acceptable to App Store Connect. Before the distribution build, confirm the workflow's Xcode is 27.1 or later and accepted for submission; a binary built with 27.0 is not Duo-capable no matter when it is submitted.
+Since 2026-10-15, **a workflow set to "Latest Release" resolves to 27.1 or later on its own** — the setting that used to be a hedge against a beta toolchain now does the right thing. A workflow pinned to an explicit 27.0 does not, and a binary built with 27.0 is not Duo-capable no matter when it is submitted, so check the pin rather than the label.
 
 ## App Store timing and featuring nominations
 
@@ -169,7 +173,7 @@ Nominations are filed before release and describe a planned update, so it is nor
 
 Editors weigh user experience, UI design, innovation, uniqueness, accessibility, localization, and the product page itself. There is no checklist that guarantees selection.
 
-Sequence the release realistically: the Duo-optimized binary needs an App Store-accepted Xcode 27.1, then App Review, then release — all before the nominated publish date. Move the publish date rather than nominating against a build that cannot ship.
+Sequence the release realistically: the Duo-optimized binary needs Xcode 27.1 or later, then App Review, then release — all before the nominated publish date. Move the publish date rather than nominating against a build that cannot ship.
 
 ## Reading the primary sources
 

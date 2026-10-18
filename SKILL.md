@@ -22,15 +22,9 @@ The single most useful thing to understand: **this is not a new platform.** It i
 
 **Build with Xcode 27.1 or later.** Apple is explicit: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen. This applies to CI too — an Xcode Cloud workflow pinned to an older Xcode produces a non-Duo-capable binary.
 
-**Check whether the installed Xcode 27.1 is a beta, RC, or release before planning distribution** (`xcodebuild -version`). Apple's releases feed is the authority:
+**Xcode 27.1 is released** — 27A9275, on 2026-10-15. It carries Swift 6.4 and the iOS 27.1 SDK and needs macOS Tahoe 26.6 or later. So the build requirement is an ordinary toolchain update: verify and distribute with the same Xcode, and point Xcode Cloud at 27.1 or later. Check what a machine has with `xcodebuild -version`.
 
-```bash
-curl -s "https://developer.apple.com/news/releases/rss/releases.rss" | grep -o "<title>[^<]*Xcode[^<]*</title>"
-```
-
-**A beta toolchain verifies, it does not ship.** All Duo-specific behavior (the simulator, vertical bars, asymmetric safe areas, the fold) can be checked on any 27.1 build. App Store Connect rejects binaries built with a beta toolchain, and an Xcode Cloud workflow set to "Latest Release" never resolves to a beta, so confirm the workflow's Xcode is one App Store Connect accepts before the distribution build.
-
-**The Duo simulator arrives with 27.1.** Verified on 2026-09-19 with Xcode 27.1 beta: the `iPhone Duo` device type (`iPhone19,4`) runs on the iOS 27.1 runtime (24A94401), and that is the only runtime that supports it — the iOS 27.2 beta runtime (24B5084k) still lists `iPhone19,4` under `unsupportedDeviceTypes`, so a newer runtime is not a substitute. Check what a given machine actually has before planning fold work:
+**The Duo simulator comes with 27.1.** Verified on 2026-10-19 with Xcode 27.1 (27A9275): the `iPhone Duo` device type (`iPhone19,4`) runs on the iOS 27.1 runtime, and only on that — iOS 27.0 does not support it, and neither does the iOS 27.2 beta runtime (24B5084k), which still lists `iPhone19,4` under `unsupportedDeviceTypes`. A newer runtime is not a substitute. Check what a given machine actually has before planning fold work:
 
 ```bash
 xcrun simctl list runtimes -j | python3 -c "
@@ -43,7 +37,7 @@ for r in json.load(sys.stdin)['runtimes']:
 
 If no runtime supports Duo, the fold-specific work (`ReservedRegion`, pose testing) cannot be verified there. Do the resizing work first — it is verifiable on any simulator — and stage the fold work behind that.
 
-**On a machine without Xcode 27.1, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
+**On a machine still on an older Xcode, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
 
 See `references/environment.md` for release timing, Xcode Cloud, and featuring nominations.
 
@@ -175,7 +169,7 @@ Read `references/reserved-regions.md` for the `ReservedRegion` API, `Arrangement
 
 Work down this list; it is roughly ordered by how much breakage each item causes.
 
-1. Build with Xcode 27.1+, including CI — and remember the distribution build needs the release toolchain, not the beta.
+1. Build with Xcode 27.1+, including CI.
 2. Remove screen-based layout math (`UIScreen.main`, hardcoded iPhone dimensions).
 3. Make every screen survive a width change — check compact and regular width.
 4. Give toolbar items both a title and a symbol; make sure bars come from navigation containers.

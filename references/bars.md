@@ -186,7 +186,12 @@ SwiftUI also offers `toolbarOverflowMenu(content:)` as a modifier alongside the 
 
 UIKit equivalents: `UIBarButtonItemVisibilityPriority` (default `.standard`), `UIBarButtonItem.axisBehavior`, `UIBarButtonItem.badge`, `UINavigationItem.pinnedTrailingGroup`, `UINavigationItem.leadingItemGroups`, `UINavigationItem.leftItemsSupplementBackButton`, `UINavigationItem.additionalOverflowItems`, `UINavigationItem.verticalBarCompressionBehavior` (`.prefersBarItems`), `UIViewController.preferredVerticalBarBehavior`, `UISheetPresentationController.preferredPlacement`, `UITraitCollection.verticalBarEdge`, `UIBackgroundExtensionView`.
 
-These versions were read out of the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1 beta, 27A9269, on 2026-09-19), not out of the documentation, which lags. The SDK spells Duo-era availability `@available(anyAppleOS 27.1, *)`.
+These versions were read out of the iOS 27.1 SDK's `.swiftinterface` files (Xcode 27.1, 27A9275; re-checked against the released SDK on 2026-10-19), not out of the documentation, which lags. The SDK spells Duo-era availability `@available(anyAppleOS 27.1, *)`. Note that the SwiftUI symbols live in **SwiftUICore**, not SwiftUI — grepping `SwiftUI.framework`'s interface finds nothing:
+
+```bash
+SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+grep -rl "toolbarVerticalEdge" "$SDK/System/Library/Frameworks/" --include="*.swiftinterface"
+```
 
 The split is worth holding onto when you pick a deployment target. **Organizing a toolbar is 27.0; inspecting or steering the vertical bar is 27.1.** `visibilityPriority`, `topBarPinnedTrailing`, `ToolbarOverflowMenu` and `defaultTabBarPlacement` are 27.0, while `toolbarVerticalEdge`, `axisBehavior`, `ToolbarVerticalCompressionBehavior` and `toolbarVerticalBehavior` are 27.1. The vertical bar itself is not an API you adopt — the system does it, given a binary built with the 27.1 SDK — so an app with a lower deployment target still gets the behavior and simply gates the tuning APIs behind `if #available(iOS 27.1, *)`.
 
