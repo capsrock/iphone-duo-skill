@@ -7,7 +7,7 @@ description: Adapt iOS apps for iPhone Duo, Apple's foldable iPhone (announced 2
 
 iPhone Duo has two displays joined by a center hinge: a compact outer display used when closed, and a 7.6-inch inner display when open. It runs iOS 27.1. Content moves between displays as the device opens, closes, folds partway, and rotates.
 
-The single most useful thing to understand: **this is not a new platform.** It is an iPhone whose window changes size a lot. Apple says so directly — if your app already works on iPad and Mac, or resizes for iPhone Mirroring, you are most of the way there. Almost all of the work is making layouts resize, which is the same work as iPad adaptation.
+The premise of everything here: **this is not a new platform.** It is an iPhone whose window changes size a lot. Apple says so directly — if your app already works on iPad and Mac, or resizes for iPhone Mirroring, you are most of the way there. Almost all of the work is making layouts resize, which is the same work as iPad adaptation.
 
 ## When to Activate
 
@@ -18,28 +18,13 @@ The single most useful thing to understand: **this is not a new platform.** It i
 - Adapting toolbars and tab bars that the system moves to the side
 - Planning a release or featuring nomination timed to the Duo launch
 
-## Environment Requirements — Check This First
+## Build Requirement
 
-**Build with Xcode 27.1 or later.** Apple is explicit: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen. This applies to CI too — an Xcode Cloud workflow pinned to an older Xcode produces a non-Duo-capable binary.
+**Build with Xcode 27.1 or later, including CI.** Apple is explicit: in earlier versions your app does not extend under the status bar and camera, so it cannot use the full screen. An Xcode Cloud workflow pinned to an older Xcode builds and passes, and quietly produces a binary that is not Duo-capable. Xcode 27.1 shipped on 2026-10-15 (27A9275).
 
-**Xcode 27.1 is released** — 27A9275, on 2026-10-15. It carries Swift 6.4 and the iOS 27.1 SDK and needs macOS Tahoe 26.6 or later. So the build requirement is an ordinary toolchain update: verify and distribute with the same Xcode, and point Xcode Cloud at 27.1 or later. Check what a machine has with `xcodebuild -version`.
+**The Duo simulator runs only on the iOS 27.1 runtime.** iOS 27.0 does not support it, and neither does the iOS 27.2 beta runtime, so a newer runtime is not a substitute. Where no installed runtime supports Duo, do the resizing work first — it is verifiable on any simulator — and stage the fold work behind it.
 
-**The Duo simulator comes with 27.1.** Verified on 2026-10-19 with Xcode 27.1 (27A9275): the `iPhone Duo` device type (`iPhone19,4`) runs on the iOS 27.1 runtime, and only on that — iOS 27.0 does not support it, and neither does the iOS 27.2 beta runtime (24B5084k), which still lists `iPhone19,4` under `unsupportedDeviceTypes`. A newer runtime is not a substitute. Check what a given machine actually has before planning fold work:
-
-```bash
-xcrun simctl list runtimes -j | python3 -c "
-import json,sys
-for r in json.load(sys.stdin)['runtimes']:
-    names=[t['name'] for t in r.get('supportedDeviceTypes',[])]
-    print(r['name'], any('Duo' in n for n in names))
-"
-```
-
-If no runtime supports Duo, the fold-specific work (`ReservedRegion`, pose testing) cannot be verified there. Do the resizing work first — it is verifiable on any simulator — and stage the fold work behind that.
-
-**On a machine still on an older Xcode, resize the app under iPhone Mirroring on a Mac.** Apple establishes the equivalence directly: with iOS 27 people can resize an app larger than ever through iPhone Mirroring, and "opening and closing iPhone Duo works the same way" — the app may cross size class boundaries, "but it is still an iPhone app" (*Prepare your app for iPhone Duo*, 02:15–02:28). Mirroring therefore exercises the same resizing path without the Duo toolchain. What it will *not* surface is the asymmetric safe areas and margins caused by the vertical bar; that needs the simulator.
-
-See `references/environment.md` for release timing, Xcode Cloud, and featuring nominations.
+`references/environment.md` has the command that checks which runtimes support Duo, how to test under iPhone Mirroring before the toolchain is updated, the simulator's limits, Xcode Cloud, and release timing.
 
 ## What Your Build Actually Gets
 
@@ -111,7 +96,7 @@ GeometryReader { proxy in
 
 ### Prefer system containers
 
-`NavigationStack`, `NavigationSplitView`, `TabView`, sheets, popovers, alerts and menus already handle resizing, fold avoidance, and camera occlusion. Reaching for a custom container means reimplementing all of that. This is the highest-leverage rule in the whole skill: most Duo bugs are custom layout code doing what a standard container would have done correctly.
+`NavigationStack`, `NavigationSplitView`, `TabView`, sheets, popovers, alerts and menus already handle resizing, fold avoidance, and camera occlusion. Reaching for a custom container means reimplementing all of that, and most Duo bugs are custom layout code doing what a standard container would have done correctly.
 
 ### Show more hierarchy on the inner display, not different features
 
@@ -125,7 +110,7 @@ On the outer display, and for some views on the inner display, the system moves 
 
 You get this for free **if** your bar content lives on a navigation container: `.toolbar { }` on a `NavigationStack` or `NavigationSplitView` in SwiftUI; toolbar items on a view controller inside a `UINavigationController` in UIKit. A hand-rolled `UIToolbar` or a custom bottom bar `HStack` will not participate.
 
-The rule that bites most often: **a toolbar item with a title but no icon is not shown in a vertical bar, and neither is one built from a custom view.** Give every item both a title and a symbol — the system picks the icon for the vertical bar and uses the title in the overflow menu.
+**A toolbar item with a title but no icon is not shown in a vertical bar, and neither is one built from a custom view.** Give every item both a title and a symbol — the system picks the icon for the vertical bar and uses the title in the overflow menu.
 
 ```swift
 ToolbarItem(placement: .topBarTrailing) {
@@ -150,7 +135,7 @@ Fold-related APIs come in layers. Reach for the highest one that solves your pro
 
 When the device is partly open, the folding region divides the inner display. iOS models this and the cameras as **reserved regions**: `division` (the fold splits content) and `occlusion` (hardware covers content).
 
-What matters for design: **keep interactive elements out of the fold.** Non-interactive content may cross it. A large tappable element centered on screen — a hero image that is also a button, a character that plays audio when tapped — lands exactly on the fold in book pose. This is the most common app-specific Duo defect and it is invisible until you test a folded pose.
+The design rule: **keep interactive elements out of the fold.** Non-interactive content may cross it. A large tappable element centered on screen — a hero image that is also a button, a character that plays audio when tapped — lands exactly on the fold in book pose. The defect is invisible until you test a folded pose.
 
 Standard components move themselves. Alerts, menus, sheets and split views already avoid the fold. Custom layouts query the regions:
 
@@ -167,20 +152,29 @@ Read `references/reserved-regions.md` for the `ReservedRegion` API, `Arrangement
 
 ## Adaptation Checklist
 
-Work down this list; it is roughly ordered by how much breakage each item causes.
+Work down this list in order. The first group is what breaks; the second makes the app better on the larger display; the last is how you confirm all of it.
+
+**Fix what breaks**
 
 1. Build with Xcode 27.1+, including CI.
-2. Remove screen-based layout math (`UIScreen.main`, hardcoded iPhone dimensions).
-3. Make every screen survive a width change — check compact and regular width.
-4. Give toolbar items both a title and a symbol; make sure bars come from navigation containers.
-5. Keep interactive elements off the fold; adopt `ReservedRegion` in custom layouts.
-6. Consider `NavigationSplitView` where your hierarchy has a natural list/detail split.
-7. Re-check sheets, popovers, and full-screen covers — a full-screen cover on a 7.6-inch display is often the wrong call.
-8. Handle each safe area edge separately; test the app on both the left and right side of Split View.
-9. Verify state and playback survive folding, unfolding, and rotation mid-task.
-10. Check large Dynamic Type on the inner display — the extra room makes big text sizes far more usable, so people who need them will be there.
-11. Turn on Reduce Transparency and re-check: the vertical bar draws an opaque background in that mode.
-12. Walk every screen across poses and both displays. On the simulator, [`duoctl`](https://github.com/skarol/duoctl) drives the poses and captures each one (`open` / `close` / `half` / `rotate`, then `screenshot`); open Device Hub only for what duoctl cannot do.
+2. Replace custom containers that reimplement a system one — `NavigationStack`, `NavigationSplitView`, `TabView`, sheets, popovers. Most Duo bugs are custom layout code doing what a standard container would have done correctly.
+3. Remove screen-based layout math (`UIScreen.main`, hardcoded iPhone dimensions).
+4. Make every screen survive a width change — check compact and regular width.
+5. Handle each safe area edge separately; test the app on both the left and right side of Split View.
+6. Give toolbar items both a title and a symbol; make sure bars come from navigation containers.
+7. Keep interactive elements off the fold; adopt `ReservedRegion` in custom layouts.
+8. Verify state and playback survive folding, unfolding, and rotation mid-task.
+9. Turn on Reduce Transparency and re-check: the vertical bar draws an opaque background in that mode.
+
+**Use the larger display**
+
+1. Re-check sheets, popovers, and full-screen covers — a full-screen cover on a 7.6-inch display is often the wrong call.
+2. Consider `NavigationSplitView` where your hierarchy has a natural list/detail split.
+3. Check large Dynamic Type on the inner display — the extra room makes big text sizes far more usable, so people who need them will be there.
+
+**Confirm**
+
+1. Walk every screen across poses and both displays. On the simulator, [`duoctl`](https://github.com/skarol/duoctl) drives the poses and captures each one (`open` / `close` / `half` / `rotate`, then `screenshot`); open Device Hub only for what duoctl cannot do.
 
 ## Common Mistakes
 
@@ -200,24 +194,6 @@ Work down this list; it is roughly ordered by how much breakage each item causes
 
 - `references/bars.md` — vertical bars, toolbar placement and overflow, sheet and split-view exceptions, API list
 - `references/reserved-regions.md` — fold and camera regions, `ReservedRegion`, `ArrangementView`, poses
-- `references/environment.md` — Xcode and simulator requirements, Xcode Cloud, App Store timing, featuring nominations
+- `references/environment.md` — Xcode and simulator requirements, Xcode Cloud, App Store timing, featuring nominations, and how to read Apple's primary sources (documentation, HIG, Tech Talk transcripts) without a browser
 
-Primary sources, both readable without a browser:
-
-```bash
-curl -s "https://developer.apple.com/documentation/TechnologyOverviews/preparing-your-app-for-iphone-duo.md"
-curl -s "https://developer.apple.com/tutorials/data/design/human-interface-guidelines/designing-for-iphone-duo.json"
-```
-
-Apple documentation pages under `/documentation/` return Markdown when you append `.md`. Human Interface Guidelines pages do not — fetch those from the `tutorials/data` JSON endpoint above.
-
-Tech Talks 111461–111466 cover preparation, bars, poses, multiple displays, camera, and design. Each session page carries a full transcript and official code samples in its HTML, so they are readable without watching:
-
-```bash
-curl -sL "https://developer.apple.com/videos/play/tech-talks/111461/" | \
-  python3 -c "import re,sys,html; t=sys.stdin.read(); m=re.search(r'<section id=\"transcript-content\">(.*?)</section>',t,re.S); print(html.unescape(re.sub(r'<[^>]+>',' ',m.group(1))))"
-```
-
-Apple Design Resources ships the iOS/iPadOS 27 UI Kit and iPhone Duo bezels.
-
-A few points here come from the iPhone Duo Group Lab (Meet with Apple, 2026-09-16), which has no public transcript, by way of d_date's write-up: https://zenn.dev/d_date/articles/d874e248ac7851 — the camera entitlement, the "can you animate the transition?" heuristic, and the note that Apple's own design team began by enumerating poses before concluding the fundamentals covered them.
+The account of Apple's design team enumerating poses (under Common Mistakes) comes from the iPhone Duo Group Lab (Meet with Apple, 2026-09-16), which has no public transcript, by way of d_date's write-up: https://zenn.dev/d_date/articles/d874e248ac7851
